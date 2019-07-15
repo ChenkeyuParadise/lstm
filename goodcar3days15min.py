@@ -1,5 +1,10 @@
+# -*- coding:utf-8 -*-
+# Author:XXX
 import numpy as np
+
 from matplotlib import pyplot as plt
+plt.switch_backend('agg')
+
 from pandas import read_csv
 import math
 from keras.models import Sequential
@@ -8,9 +13,13 @@ from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 
+# 自定义类
+from model import RegModel
+
+
 seed = 7
 batch_size = 1
-epochs = 1
+model_epoch = 20
 filename = 'goodcar3days15min.csv'
 footer = 3
 look_back=20
@@ -25,12 +34,6 @@ def create_dataset(dataset):
         print('X: %s, Y: %s' % (x, y))
     return np.array(dataX), np.array(dataY)
 
-def build_model():
-    model = Sequential()
-    model.add(LSTM(units=4, input_shape=(1, look_back)))
-    model.add(Dense(units=1))
-    model.compile(loss='mean_squared_error', optimizer='adam')
-    return model
 
 if __name__ == '__main__':
 
@@ -54,10 +57,16 @@ if __name__ == '__main__':
     # 将输入转化成为【sample， time steps, feature]
     X_train = np.reshape(X_train, (X_train.shape[0], 1, X_train.shape[1]))
     X_validation = np.reshape(X_validation, (X_validation.shape[0], 1, X_validation.shape[1]))
-
+    #
+    #print(dir(X_train))
+    #print("X_train.shape:" , X_train.shape)
+    #print("y_train.shape:", y_train.shape)
     # 训练模型
-    model = build_model()
-    model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=2)
+    RegModel = RegModel()
+    model = RegModel.Model_Easy_Lstm()
+    #model = RegModel.Model_Lr()
+    #model = RegModel.Model_DNN()
+    model.fit(X_train, y_train, nb_epoch=model_epoch, batch_size=batch_size, verbose=2)
 
     # 模型预测数据
     predict_train = model.predict(X_train)
@@ -69,7 +78,7 @@ if __name__ == '__main__':
     y_train = scaler.inverse_transform([y_train])
     predict_validation = scaler.inverse_transform(predict_validation)
     y_validation = scaler.inverse_transform([y_validation])
-    print (predict_validation)
+    #print (predict_validation)
     # 评估模型
     train_score = math.sqrt(mean_squared_error(y_train[0], predict_train[:, 0]))
     print('Train Score: %.2f RMSE' % train_score)
